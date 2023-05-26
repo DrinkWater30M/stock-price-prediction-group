@@ -9,6 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import external_stock_data
 import prediction
+from datetime import date
 
 
 app = dash.Dash()
@@ -196,24 +197,23 @@ app.layout = html.Div([
               [Input('tabs', 'value')])
 def update_price_graph(valueTab):
      if valueTab == 'btc-usd':
+        predColumn = 'Close'
+        predPrice = prediction.predictByLSTM('BTC-USD', predColumn, '2023-01-01', '2023-05-01')
         dataPrice = external_stock_data.getStockDataToNow('BTC-USD', 5*365)
-        prePrice = prediction.predictByLSTM('BTC-USD', 'Close', '2023-04-01', '2023-05-01')
-        print(prePrice)
         figure = {
             'data': [
                 go.Scatter(
                     x=dataPrice.index,
-                    y=dataPrice["Close"],
+                    y=dataPrice[predColumn],
                     mode='lines',
                     opacity=0.7, 
                     name=f'Actual closing price',textposition='bottom center'),
                 go.Scatter(
-                    x=prePrice.index,
-                    y=prePrice["Predictions"],
+                    x=predPrice.index,
+                    y=predPrice["Predictions"],
                     mode='lines',
                     opacity=0.6,
                     name=f'Predicted closing price',textposition='bottom center')
-
             ],
             'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
                                             '#FF7400', '#FFF400', '#FF0056'],
