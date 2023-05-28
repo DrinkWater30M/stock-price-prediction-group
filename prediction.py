@@ -22,7 +22,6 @@ def predictByLSTM(stock, column, start_date, end_date):
     # get data
     new_start_date = date.strftime(pd.to_datetime(start_date) - timedelta(60), '%Y-%m-%d')
     df = external_stock_data.getStockData(stock, new_start_date, end_date)
-    print(df)
     df["Date"] = df.index
 
     # sort data
@@ -54,12 +53,11 @@ def predictByLSTM(stock, column, start_date, end_date):
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
 
     # load model to predict
-    model=load_model("BTC-USD_lstm_model.h5")
+    model=load_model(f"model/{stock}_{column}_lstm_model.h5")
 
     # predict
     pred_price=model.predict(X_test)
     pred_price=scaler.inverse_transform(pred_price)
-    print(pred_price)
 
     # scale one day because 60 previous days will predict next day
     pred = new_data[61:]

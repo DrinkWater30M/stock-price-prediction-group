@@ -15,7 +15,7 @@ from keras.layers import LSTM,Dropout,Dense
 from sklearn.preprocessing import MinMaxScaler
 
 # 2. Read the dataset:
-df=pd.read_csv("NSE-TATA.csv")
+df=pd.read_csv("example/NSE-TATA.csv")
 df.head()
 
 # 3. Analyze the closing prices from dataframe:
@@ -81,7 +81,7 @@ predicted_closing_price=lstm_model.predict(X_test)
 predicted_closing_price=scaler.inverse_transform(predicted_closing_price)
 
 # 8. Save the LSTM model:
-lstm_model.save("saved_model.h5")
+lstm_model.save("example/saved_model.h5")
 
 # 9. Visualize the predicted stock costs with actual stock costs:
 train_data=new_dataset[:987]

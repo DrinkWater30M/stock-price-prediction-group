@@ -60,8 +60,24 @@ def buildModelByLSTM(stock, column, days):
     lstm_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
 
     # 8. Save the LSTM model:
-    lstm_model.save(f"{stock}_lstm_model.h5")
+    lstm_model.save(f"model/{stock}_{column}_lstm_model.h5")
     return
 
 # build some model
+##### BTC-USD #####
+buildModelByLSTM('BTC-USD', "Open", 5*365)
 buildModelByLSTM('BTC-USD', "Close", 5*365)
+buildModelByLSTM('BTC-USD', "Low", 5*365)
+buildModelByLSTM('BTC-USD', "High", 5*365)
+
+##### ETH-USD #####
+buildModelByLSTM('ETH-USD', "Open", 5*365)
+buildModelByLSTM('ETH-USD', "Close", 5*365)
+buildModelByLSTM('ETH-USD', "Low", 5*365)
+buildModelByLSTM('ETH-USD', "High", 5*365)
+
+##### ADA-USD #####
+buildModelByLSTM('ADA-USD', "Open", 5*365)
+buildModelByLSTM('ADA-USD', "Close", 5*365)
+buildModelByLSTM('ADA-USD', "Low", 5*365)
+buildModelByLSTM('ADA-USD', "High", 5*365)
