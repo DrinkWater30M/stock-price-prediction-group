@@ -44,10 +44,15 @@ app.layout = html.Div([
     html.Div(
         children = [
             html.H2("Actual And Predicted Prices(LSTM)",style={"textAlign": "center"}),
-            dcc.Graph(id="price-graph"),
+            dcc.Loading(
+                dcc.Graph(id="price-graph"),
+            ),
+
             html.H2("Transactions Volume",style={"textAlign": "center"}),
-            dcc.Graph(id="volume-graph")				
-	    ],
+            dcc.Loading(
+                dcc.Graph(id="volume-graph")				
+            ),
+        ],
         style={"border": "solid 1px gray", "marginTop": "10px"}  
     ),
 ])
@@ -89,8 +94,8 @@ def update_price_graph(coin, price_type):
                   Input('coin-dropdown', 'value'),
               ])
 def update_volume_graph(coin):
+    print('run')
     dataVolume = external_stock_data.getStockData(coin, '2018-01-01', '2023-01-01')
-    print(dataVolume)
     figure = {
         'data': [
             go.Scatter(
