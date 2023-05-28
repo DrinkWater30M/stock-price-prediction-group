@@ -53,7 +53,7 @@ def predictByLSTM(stock, column, start_date, end_date):
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
 
     # load model to predict
-    model=load_model(f"{stock}_{column}_lstm_model.h5")
+    model=load_model(f"model/{stock}_{column}_lstm_model.h5")
 
     # predict
     pred_price=model.predict(X_test)

@@ -53,7 +53,7 @@ x_train,y_train=np.array(x_train),np.array(y_train)
 
 x_train=np.reshape(x_train,(x_train.shape[0],x_train.shape[1],1))
 
-model=load_model("saved_model.h5")
+model=load_model("model/saved_model.h5")
 
 inputs=new_data[len(new_data)-len(valid)-60:].values
 inputs=inputs.reshape(-1,1)
@@ -76,7 +76,7 @@ valid['Predictions']=closing_price
 
 df= pd.read_csv("./NSE-TATA.csv")
 
-# show graph from data
+# implement ui
 app.layout = html.Div([
    
    # title
@@ -98,7 +98,7 @@ app.layout = html.Div([
                     {'label': 'Open Price', 'value': 'Open'},
                     {'label': 'Close Price', 'value': 'Close'},
                     {'label': 'Low Price', 'value': 'Low'},
-                    {'label': 'Open High', 'value': 'High'},
+                    {'label': 'High Price', 'value': 'High'},
                 ], 
                 value='Open', 
                 clearable=False,

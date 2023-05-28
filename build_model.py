@@ -60,7 +60,7 @@ def buildModelByLSTM(stock, column, days):
     lstm_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
 
     # 8. Save the LSTM model:
-    lstm_model.save(f"{stock}_{column}_lstm_model.h5")
+    lstm_model.save(f"model/{stock}_{column}_lstm_model.h5")
     return
 
 # build some model
