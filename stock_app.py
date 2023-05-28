@@ -53,7 +53,7 @@ x_train,y_train=np.array(x_train),np.array(y_train)
 
 x_train=np.reshape(x_train,(x_train.shape[0],x_train.shape[1],1))
 
-model=load_model("BTC-USD_lstm_model.h5")
+model=load_model("saved_model.h5")
 
 inputs=new_data[len(new_data)-len(valid)-60:].values
 inputs=inputs.reshape(-1,1)
@@ -79,8 +79,45 @@ df= pd.read_csv("./NSE-TATA.csv")
 # show graph from data
 app.layout = html.Div([
    
+   # title
     html.H1("Stock Price Analysis Dashboard", style={"textAlign": "center"}),
-   
+
+    # tool bar
+    html.Div(
+        style={"display": "flex", "gap": "20px"},
+        children=[
+            dcc.Dropdown(
+                id='coin-dropdown',
+                options=['BTC-USD', 'ETH-USD', 'ADA-USD'], 
+                value='BTC-USD', 
+                clearable=False,
+                style={"width": "200px"}),
+            dcc.Dropdown(
+                id='price-type-dropdown',
+                options=[
+                    {'label': 'Open Price', 'value': 'Open'},
+                    {'label': 'Close Price', 'value': 'Close'},
+                    {'label': 'Low Price', 'value': 'Low'},
+                    {'label': 'Open High', 'value': 'High'},
+                ], 
+                value='Open', 
+                clearable=False,
+                style={"width": "200px"}),
+    ]),
+
+    # present data by graph
+    html.Div(
+        children = [
+            html.H2("Actual And Predicted Closing Prices(LSTM)",style={"textAlign": "center"}),
+            dcc.Graph(id="price-graph"),
+            html.H2("Transactions Volume",style={"textAlign": "center"}),
+            dcc.Graph(id="volume-graph")				
+	    ],
+        style={"border": "solid 1px gray", "marginTop": "10px"}  
+    ),
+
+
+
     dcc.Tabs(id="tabs", children=[
         # example stock
         dcc.Tab(label='NSE-TATAGLOBAL Stock Data(Example)',children=[
@@ -160,6 +197,19 @@ app.layout = html.Div([
 			])   
         ]),
 
+        # eth-usd stock
+        dcc.Tab(
+            value='eth-usd',
+            label='ETH-USD Stock Data',
+            children=[
+			html.Div([
+				html.H2("Actual And Predicted Closing Prices(LSTM)",style={"textAlign": "center"}),
+				dcc.Graph(id="eth-usd-price"),
+				html.H2("Transactions Volume",style={"textAlign": "center"}),
+				dcc.Graph(id="eth-usd-volume")				
+			])   
+        ]),
+
         # # info some example stock
         # dcc.Tab(label='Facebook Stock Data', children=[
         #     html.Div([
@@ -192,13 +242,13 @@ app.layout = html.Div([
 ])
 
 
-# update graph when click each tab
+# update btc graph when click tab
 @app.callback(Output('btc-usd-price', 'figure'),
               [Input('tabs', 'value')])
 def update_price_graph(valueTab):
      if valueTab == 'btc-usd':
         predColumn = 'Close'
-        predPrice = prediction.predictByLSTM('BTC-USD', predColumn, '2023-01-01', '2023-05-01')
+        predPrice = prediction.predictByLSTM('BTC-USD', predColumn, '2023-01-01', date.today())
         dataPrice = external_stock_data.getStockDataToNow('BTC-USD', 5*365)
         figure = {
             'data': [
@@ -246,9 +296,114 @@ def update_volume_graph(valueTab):
      
      return {}
 
+# update eth graph when click tab
+@app.callback(Output('eth-usd-price', 'figure'),
+              [Input('tabs', 'value')])
+def update_price_graph(valueTab):
+     if valueTab == 'eth-usd':
+        predColumn = 'Close'
+        predPrice = prediction.predictByLSTM('ETH-USD', predColumn, '2023-01-01', date.today())
+        dataPrice = external_stock_data.getStockDataToNow('ETH-USD', 5*365)
+        figure = {
+            'data': [
+                go.Scatter(
+                    x=dataPrice.index,
+                    y=dataPrice[predColumn],
+                    mode='lines',
+                    opacity=0.7, 
+                    name=f'Actual closing price',textposition='bottom center'),
+                go.Scatter(
+                    x=predPrice.index,
+                    y=predPrice["Predictions"],
+                    mode='lines',
+                    opacity=0.6,
+                    name=f'Predicted closing price',textposition='bottom center')
+            ],
+            'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            yaxis={"title":"Price (USD)"})
+        }
+        return figure
+     
+     return {}
+
+@app.callback(Output('eth-usd-volume', 'figure'),
+              [Input('tabs', 'value')])
+def update_volume_graph(valueTab):
+     if valueTab == 'eth-usd':
+        dataVolume = external_stock_data.getStockDataToNow('ETH-USD', 5*365)
+        figure = {
+            'data': [
+                go.Scatter(
+                    x=dataVolume.index,
+                    y=dataVolume["Volume"],
+                    mode='lines', opacity=0.7,
+                    name=f'Volume', textposition='bottom center')
+            ], 
+            'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            yaxis={"title":"Volume"})
+        }
+        return figure
+     
+     return {}
 
 
 
+# update price graph follow by input user
+@app.callback(Output('price-graph', 'figure'),
+              [
+                  Input('coin-dropdown', 'value'),
+                  Input('price-type-dropdown', 'value')
+              ])
+def update_price_graph(coin, price_type):
+    predPrice = prediction.predictByLSTM(coin, price_type, '2023-01-01', date.today())
+    dataPrice = external_stock_data.getStockDataToNow(coin, 5*365)
+    figure = {
+        'data': [
+            go.Scatter(
+                x=dataPrice.index,
+                y=dataPrice[price_type],
+                mode='lines',
+                opacity=0.7, 
+                name=f'Actual {price_type} Price',textposition='bottom center'),
+            go.Scatter(
+                x=predPrice.index,
+                y=predPrice["Predictions"],
+                mode='lines',
+                opacity=0.6,
+                name=f'Predicted {price_type} Price',textposition='bottom center')
+        ],
+        'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                        '#FF7400', '#FFF400', '#FF0056'],
+        height=600,
+        yaxis={"title":"Price (USD)"})
+    }
+    return figure
+
+# update volume graph follow by input user
+@app.callback(Output('volume-graph', 'figure'),
+              [
+                  Input('coin-dropdown', 'value'),
+              ])
+def update_volume_graph(coin):
+    dataVolume = external_stock_data.getStockDataToNow(coin, 5*365)
+    figure = {
+        'data': [
+            go.Scatter(
+                x=dataVolume.index,
+                y=dataVolume["Volume"],
+                mode='lines', opacity=0.7,
+                name=f'Volume', textposition='bottom center')
+        ], 
+        'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                        '#FF7400', '#FFF400', '#FF0056'],
+        height=600,
+        yaxis={"title":"Volume"})
+    }
+    return figure
 
 # #update graph for stock info tab
 # @app.callback(Output('highlow', 'figure'),
