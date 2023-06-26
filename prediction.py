@@ -13,12 +13,9 @@ from keras.layers import LSTM,Dropout,Dense
 from keras.models import load_model
 import external_stock_data
 from datetime import date, timedelta
-
-
-
 from sklearn.preprocessing import MinMaxScaler
 
-def predictByLSTM(stock, column, start_date, end_date):
+def predict(stock, column, start_date, end_date, algorithm):
     # get data
     new_start_date = date.strftime(pd.to_datetime(start_date) - timedelta(60), '%Y-%m-%d')
     df = external_stock_data.getStockData(stock, new_start_date, end_date)
@@ -53,7 +50,7 @@ def predictByLSTM(stock, column, start_date, end_date):
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
 
     # load model to predict
-    model=load_model(f"model/{stock}_{column}_lstm_model.h5")
+    model=load_model(f"model/{stock}_{column}_{algorithm}_model.h5")
 
     # predict
     pred_price=model.predict(X_test)
@@ -72,3 +69,11 @@ def predictByLSTM(stock, column, start_date, end_date):
     # return result
     pred["Predictions"] = pred_price
     return pred
+
+def predictByLSTM(stock, column, start_date, end_date):
+    result = predict(stock, column, start_date, end_date, 'lstm')
+    return result
+
+def predictByRNN(stock, column, start_date, end_date):
+    result = predict(stock, column, start_date, end_date, 'rnn')
+    return result

@@ -9,11 +9,17 @@ import matplotlib.pyplot as plt
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize']=20,10
 from keras.models import Sequential
-from keras.layers import LSTM,Dropout,Dense
+from keras.layers import LSTM,Dense,SimpleRNN
 from sklearn.preprocessing import MinMaxScaler
 import external_stock_data
+import threading
+import time
+import random
 
-def buildModelByLSTM(stock, column, days):
+def buildModel(stock, column, days, algorithm):
+    # alert start
+    print(f'runing {stock}_{column}_{algorithm}_model.h5')
+
     # get data
     df = external_stock_data.getStockDataToNow(stock, days)
 
@@ -51,33 +57,60 @@ def buildModelByLSTM(stock, column, days):
 
     x_train_data=np.reshape(x_train_data,(x_train_data.shape[0],x_train_data.shape[1],1))
 
-    # 6. Build and train the LSTM model:
-    lstm_model=Sequential()
-    lstm_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
-    lstm_model.add(LSTM(units=50))
-    lstm_model.add(Dense(1))
-    lstm_model.compile(loss='mean_squared_error',optimizer='adam')
-    lstm_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
+    # 6. Build model using algorithm:
+    train_model=Sequential()
+    if(algorithm == 'lstm'):
+        train_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        train_model.add(LSTM(units=50))
+    elif(algorithm == 'rnn'):
+        train_model.add(SimpleRNN(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        train_model.add(SimpleRNN(units=50))
+    else:
+        train_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        train_model.add(LSTM(units=50))
+
+    train_model.add(Dense(1))
+    train_model.compile(loss='mean_squared_error',optimizer='adam')
+    train_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
 
     # 8. Save the LSTM model:
-    lstm_model.save(f"model/{stock}_{column}_lstm_model.h5")
+    train_model.save(f"model/{stock}_{column}_{algorithm}_model.h5")
+
+    #alert done
+    print(f'done {stock}_{column}_{algorithm}_model.h5')
     return
 
+def buildModelByLSTM(stock, column, days):
+    result = buildModel(stock, column, days, 'lstm')
+    return result
+
+def buildModelByRNN(stock, column, days):
+    result = buildModel(stock, column, days, 'rnn')
+    return result
+
+def labAsync(algorithm, coin, column):
+    print(f"{algorithm}_{coin}_{column}")
+    time.sleep(5)
+
 # build some model
-##### BTC-USD #####
-buildModelByLSTM('BTC-USD', "Open", 5*365)
-buildModelByLSTM('BTC-USD', "Close", 5*365)
-buildModelByLSTM('BTC-USD', "Low", 5*365)
-buildModelByLSTM('BTC-USD', "High", 5*365)
+def buildAllModelsForSystem():
+    coins = ['BTC-USD', 'ETH-USD', 'ADA-USD']
+    algorithms = ['lstm', 'rnn']
+    columns = ['Open', 'Close', 'Low', 'High']
 
-##### ETH-USD #####
-buildModelByLSTM('ETH-USD', "Open", 5*365)
-buildModelByLSTM('ETH-USD', "Close", 5*365)
-buildModelByLSTM('ETH-USD', "Low", 5*365)
-buildModelByLSTM('ETH-USD', "High", 5*365)
+    for coin in coins:
+        threadsOfCoin = []
 
-##### ADA-USD #####
-buildModelByLSTM('ADA-USD', "Open", 5*365)
-buildModelByLSTM('ADA-USD', "Close", 5*365)
-buildModelByLSTM('ADA-USD', "Low", 5*365)
-buildModelByLSTM('ADA-USD', "High", 5*365)
+        # start thread of one coin
+        for algorithm in algorithms:
+            for column in columns:
+                thread = threading.Thread(target=buildModel, args=(coin, column, 5*365, algorithm))
+                threadsOfCoin.append(thread)
+                thread.start()
+
+        # await all above thread done
+        for thread in threadsOfCoin:
+            thread.join()
+
+
+buildAllModelsForSystem()

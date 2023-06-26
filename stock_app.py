@@ -38,6 +38,15 @@ app.layout = html.Div([
                 value='Open', 
                 clearable=False,
                 style={"width": "200px"}),
+            dcc.Dropdown(
+                id='algorithm-dropdown',
+                options=[
+                    {'label': 'LSTM', 'value': 'LSTM'},
+                    {'label': 'RNN', 'value': 'RNN'},
+                ], 
+                value='LSTM', 
+                clearable=False,
+                style={"width": "200px"}),
     ]),
 
     # data presention by graph
@@ -61,10 +70,17 @@ app.layout = html.Div([
 @app.callback(Output('price-graph', 'figure'),
               [
                   Input('coin-dropdown', 'value'),
-                  Input('price-type-dropdown', 'value')
+                  Input('price-type-dropdown', 'value'),
+                  Input('algorithm-dropdown', 'value')
               ])
-def update_price_graph(coin, price_type):
-    predPrice = prediction.predictByLSTM(coin, price_type, '2023-01-01', date.today())
+def update_price_graph(coin, price_type, algorithm):
+    if algorithm == 'RNN':
+        print('runing RNN algorithm')
+        predPrice = prediction.predictByRNN(coin, price_type, '2023-01-01', date.today())
+    else:
+        print('runing default algorithm: LSTM')
+        predPrice = prediction.predictByLSTM(coin, price_type, '2023-01-01', date.today())
+
     dataPrice = external_stock_data.getStockDataToNow(coin, 5*365)
     figure = {
         'data': [
