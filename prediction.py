@@ -14,6 +14,9 @@ from keras.models import load_model
 import external_stock_data
 from datetime import date, timedelta
 from sklearn.preprocessing import MinMaxScaler
+import xgboost as xgb
+import joblib
+
 
 def predict(stock, column, start_date, end_date, algorithm):
     # get data
@@ -75,5 +78,9 @@ def predictByLSTM(stock, column, start_date, end_date):
     return result
 
 def predictByRNN(stock, column, start_date, end_date):
+    result = predict(stock, column, start_date, end_date, 'rnn')
+    return result
+
+def predictByXGBoost(stock, column, start_date, end_date):
     result = predict(stock, column, start_date, end_date, 'rnn')
     return result
