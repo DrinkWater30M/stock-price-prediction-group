@@ -41,10 +41,11 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='algorithm-dropdown',
                 options=[
-                    {'label': 'LSTM', 'value': 'LSTM'},
-                    {'label': 'RNN', 'value': 'RNN'},
+                    {'label': 'LSTM', 'value': 'lstm'},
+                    {'label': 'RNN', 'value': 'rnn'},
+                    {'label': 'XGBoost', 'value': 'xgboost'},
                 ], 
-                value='LSTM', 
+                value='lstm', 
                 clearable=False,
                 style={"width": "200px"}),
     ]),
@@ -74,9 +75,12 @@ app.layout = html.Div([
                   Input('algorithm-dropdown', 'value')
               ])
 def update_price_graph(coin, price_type, algorithm):
-    if algorithm == 'RNN':
+    if algorithm == 'rnn':
         print('runing RNN algorithm')
         predPrice = prediction.predictByRNN(coin, price_type, '2023-01-01', date.today())
+    elif algorithm == 'xgboost':
+        print('runing XGBoost algorithm')
+        predPrice = prediction.predictByXGBoost(coin, price_type, '2023-01-01', date.today())
     else:
         print('runing default algorithm: LSTM')
         predPrice = prediction.predictByLSTM(coin, price_type, '2023-01-01', date.today())

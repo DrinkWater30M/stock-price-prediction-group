@@ -10,11 +10,13 @@ from matplotlib.pylab import rcParams
 rcParams['figure.figsize']=20,10
 from keras.models import Sequential
 from keras.layers import LSTM,Dense,SimpleRNN
+import xgboost as xgb
 from sklearn.preprocessing import MinMaxScaler
 import external_stock_data
 import threading
 import time
-import random
+from keras.models import save_model
+import joblib
 
 def buildModel(stock, column, days, algorithm):
     # alert start
@@ -55,26 +57,29 @@ def buildModel(stock, column, days, algorithm):
         
     x_train_data,y_train_data=np.array(x_train_data),np.array(y_train_data)
 
-    x_train_data=np.reshape(x_train_data,(x_train_data.shape[0],x_train_data.shape[1],1))
-
     # 6. Build model using algorithm:
-    train_model=Sequential()
-    if(algorithm == 'lstm'):
-        train_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
-        train_model.add(LSTM(units=50))
-    elif(algorithm == 'rnn'):
-        train_model.add(SimpleRNN(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+    if(algorithm == 'rnn'):
+        x_train_data=np.reshape(x_train_data,(x_train_data.shape[0],x_train_data.shape[1],1))
+        train_model = Sequential()
+        train_model.add(SimpleRNN(units=50, return_sequences=True, input_shape=(x_train_data.shape[1], 1)))
         train_model.add(SimpleRNN(units=50))
+        train_model.add(Dense(1))
+        train_model.compile(loss='mean_squared_error', optimizer='adam')
+        train_model.fit(x_train_data, y_train_data, epochs=1, batch_size=1, verbose=2)
+        train_model.save(f"model/{stock}_{column}_{algorithm}_model.h5")
+    elif(algorithm == 'xgboost'):
+        train_model = xgb.XGBRegressor(n_estimators=100, max_depth=3, learning_rate=0.1)
+        train_model.fit(x_train_data, y_train_data)
+        train_model.save_model(f"model/{stock}_{column}_{algorithm}_model.h5")
     else:
-        train_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        x_train_data=np.reshape(x_train_data,(x_train_data.shape[0],x_train_data.shape[1],1))
+        train_model = Sequential()
+        train_model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train_data.shape[1], 1)))
         train_model.add(LSTM(units=50))
-
-    train_model.add(Dense(1))
-    train_model.compile(loss='mean_squared_error',optimizer='adam')
-    train_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
-
-    # 8. Save the LSTM model:
-    train_model.save(f"model/{stock}_{column}_{algorithm}_model.h5")
+        train_model.add(Dense(1))
+        train_model.compile(loss='mean_squared_error', optimizer='adam')
+        train_model.fit(x_train_data, y_train_data, epochs=1, batch_size=1, verbose=2)
+        train_model.save(f"model/{stock}_{column}_{algorithm}_model.h5")
 
     #alert done
     print(f'done {stock}_{column}_{algorithm}_model.h5')
@@ -95,7 +100,8 @@ def labAsync(algorithm, coin, column):
 # build some model
 def buildAllModelsForSystem():
     coins = ['BTC-USD', 'ETH-USD', 'ADA-USD']
-    algorithms = ['lstm', 'rnn']
+    algorithms = ['lstm', 'rnn', 'xgboost']
+    #algorithms = ['xgboost']
     columns = ['Open', 'Close', 'Low', 'High']
 
     for coin in coins:
