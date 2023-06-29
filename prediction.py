@@ -18,11 +18,25 @@ import xgboost as xgb
 import joblib
 
 
+# Caluculate ROC form data like [[][]]
+def calculate_roc(data):
+    series = pd.Series(data.flatten())  
+    roc = (series - series.shift(1)) / series.shift(1) * 100
+    return roc.values.reshape(-1, 1)
+
+
 def predict(stock, column, start_date, end_date, algorithm):
     # get data
     new_start_date = date.strftime(pd.to_datetime(start_date) - timedelta(60), '%Y-%m-%d')
     df = external_stock_data.getStockData(stock, new_start_date, end_date)
     df["Date"] = df.index
+
+    # Get predict Close alternative for ROC
+    temp = ""
+    if (column == "ROC"):
+        temp = "ROC"
+        column = 'Close'
+    
 
     # sort data
     data=df.sort_index(ascending=True,axis=0)
@@ -44,13 +58,14 @@ def predict(stock, column, start_date, end_date, algorithm):
     inputs=new_data.values
     inputs=inputs.reshape(-1,1)
     inputs=scaler.transform(inputs)
+    
 
     X_test=[]
     for i in range(60, inputs.shape[0]):
         X_test.append(inputs[i-60:i,0])
     X_test=np.array(X_test)
-
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
+    
 
     # load model to predict
     model=load_model(f"model/{stock}_{column}_{algorithm}_model.h5")
@@ -61,13 +76,22 @@ def predict(stock, column, start_date, end_date, algorithm):
 
     # scale one day because 60 previous days will predict next day
     pred = new_data[61:]
-    
+
     # Create a new row of data
     newDate = date.strftime(pd.to_datetime(pred.index[-1]) + timedelta(1), '%Y-%m-%d')
     new_row = pd.DataFrame(index=pd.to_datetime([newDate]))
 
     # Append the new row to the DataFrame
     pred = pd.concat([pred, new_row])
+   
+
+    # Calculate ROC values
+    if temp == "ROC":
+        roc_values = calculate_roc(pred_price)
+       
+        pred_price = roc_values
+        print("pred[column]",pred_price)
+        
     
     # return result
     pred["Predictions"] = pred_price

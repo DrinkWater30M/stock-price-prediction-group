@@ -6,6 +6,13 @@ from dash.dependencies import Input, Output
 import external_stock_data
 import prediction
 from datetime import date
+import pandas as pd
+
+
+def calculate_roc(data):
+    roc = (data - data.shift(1)) / data.shift(1) * 100
+    return roc
+
 
 # init app
 app = dash.Dash()
@@ -34,6 +41,7 @@ app.layout = html.Div([
                     {'label': 'Close Price', 'value': 'Close'},
                     {'label': 'Low Price', 'value': 'Low'},
                     {'label': 'High Price', 'value': 'High'},
+                    {'label': 'ROC', 'value': 'ROC'},
                 ], 
                 value='Open', 
                 clearable=False,
@@ -86,6 +94,8 @@ def update_price_graph(coin, price_type, algorithm):
         predPrice = prediction.predictByLSTM(coin, price_type, '2023-01-01', date.today())
 
     dataPrice = external_stock_data.getStockDataToNow(coin, 5*365)
+    dataPrice["ROC"] = calculate_roc(dataPrice["Close"])
+    print("data", predPrice)
     figure = {
         'data': [
             go.Scatter(
@@ -104,7 +114,7 @@ def update_price_graph(coin, price_type, algorithm):
         'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
                                         '#FF7400', '#FFF400', '#FF0056'],
         height=600,
-        yaxis={"title":"Price (USD)"})
+        yaxis={"title": "ROC (%)" if price_type == "ROC" else "Price (USD)"})
     }
     return figure
 
