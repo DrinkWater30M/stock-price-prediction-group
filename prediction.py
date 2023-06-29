@@ -97,6 +97,36 @@ def predict(stock, column, start_date, end_date, algorithm):
     pred["Predictions"] = pred_price
     return pred
 
+def predictNextFrames(predResult, stock, column, algorithm, nFrames):
+    # scale data
+    scaler=MinMaxScaler(feature_range=(0,1))
+    scaler.fit_transform(predResult.values)
+
+    # get data to predict
+    inputs=[predResult.values]
+    inputs=inputs.reshape(-1,1)
+    inputs=scaler.transform(inputs)
+
+    X_test=[]
+    X_test.append(inputs[inputs.shape[0]-60:inputs.shape[0],0])
+    X_test=np.array(X_test)
+
+    X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
+
+    # load model to predict
+    model=load_model(f"model/{stock}_{column}_{algorithm}_model.h5")
+
+    # predict
+    print(X_test)
+    pred_price=model.predict(X_test)
+    pred_price=scaler.inverse_transform(pred_price)
+
+    # scale one day because 60 previous days will predict next day
+    print(pred_price)
+    return pred_price
+        
+
+
 def predictByLSTM(stock, column, start_date, end_date):
     result = predict(stock, column, start_date, end_date, 'lstm')
     return result

@@ -1,5 +1,7 @@
 import yfinance as yf
 from datetime import date, timedelta
+import json
+import requests
 
 def getStockData(stock, start_date, end_date):
   # get data
@@ -13,3 +15,12 @@ def getStockDataToNow(stock, days):
   data = getStockData(stock, start_date, end_date)
 
   return data
+
+def getLatestStockPrice(stock):
+  key = f"https://api.binance.com/api/v3/ticker/price?symbol={stock}USDT"
+  data = requests.get(key)  
+  data = data.json()
+  price = data["price"]
+
+  return price
+  

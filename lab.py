@@ -1,5 +1,7 @@
-import yfinance as yf
-ticker = yf.Ticker('GOOGL').info
-previous_close_price = ticker['regularMarketPreviousClose']
-print('Ticker: GOOGL')
-print('Previous Close Price:', previous_close_price)
+import time
+import external_stock_data
+
+while True:
+    data = external_stock_data.getLatestStockPrice('BTC')
+    print(data)
+    time.sleep(3)
