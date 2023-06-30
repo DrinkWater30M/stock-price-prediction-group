@@ -83,7 +83,7 @@ app.layout = html.Div([
     # data presention by graph
     html.Div(
         children = [
-            html.H2("Actual And Predicted Prices(LSTM)",style={"textAlign": "center"}),
+            html.H2("Actual And Predicted Prices",style={"textAlign": "center"}),
             dcc.Loading(
                 dcc.Graph(id="price-graph"),
             ),
